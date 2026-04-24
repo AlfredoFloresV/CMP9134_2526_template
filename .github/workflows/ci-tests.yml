@@ -23,6 +23,11 @@ jobs:
       pip install pytest fastapi
       # Add any other requirements.txt installations here
 
+    - name: Static Analysis (Linting)
+      run: |
+      pip install flake8
+      flake8 ./backend --count --max-complexity=5 --show-source --statistics
+
     - name: Run test suite
       run: |
       pytest
