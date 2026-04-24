@@ -37,6 +37,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from robot_client import robot, RobotConnectionError
+from legacy_stats import router as legacy_router
 
 # ── Configuration from environment variables ───────────────────────────────
 # os.getenv(key, default) reads a value from the process environment.
@@ -79,6 +80,9 @@ app = FastAPI(
     description="CMP9134 — Robot Management System scaffold",
     version="0.1.0",
 )
+
+app.include_router(legacy_router)
+
 
 # ── CORS middleware ────────────────────────────────────────────────────────
 # Browsers enforce the Same-Origin Policy: a web page served from one origin
