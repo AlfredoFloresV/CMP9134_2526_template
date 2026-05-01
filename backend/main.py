@@ -52,6 +52,8 @@ from legacy_stats import router as legacy_router
 ROBOT_API_URL = os.getenv("ROBOT_API_URL", "http://localhost:5000")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
 
+ENABLE_ADVANCED_STATS = os.getenv("FF_ADVANCED_STATS", "false").lower() == "true"
+
 # ── Logging setup ──────────────────────────────────────────────────────────
 # basicConfig() configures the root logger once at startup.
 # LOG_LEVEL.upper() converts e.g. "info" → "INFO" to match the constants
@@ -175,6 +177,13 @@ async def get_status():
         return {"error": str(exc)}
 
 
+@app.get("/api/experimental_stats")
+def get_experimental_stats():
+    if not ENABLE_ADVANCED_STATS:
+        return {"error": "Feature not yet available."}, 404
+    return {"status": "success", "data": "Top secret advanced stats!"}
+
+
 # ── TODO: add your routes below ────────────────────────────────────────────
 # Use the skeletons below as starting points.  Each route should:
 #   1. Validate inputs — FastAPI does this automatically when you add type
@@ -208,3 +217,4 @@ async def get_status():
 #             await asyncio.sleep(0.5)   # push an update every 500 ms
 #     except WebSocketDisconnect:
 #         logger.info("Telemetry client disconnected")
+# Read the feature flag, defaulting to "false" if not set

@@ -4,11 +4,13 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+
 class MissionStats(BaseModel):
     mission_type: int
     distance: float
     battery: float
     payload_weight: float = 0
+
 
 @router.post("/api/mission_stats", response_model=MissionStats)
 def calc_stats(data: MissionStats):
@@ -42,11 +44,13 @@ def calc_stats(data: MissionStats):
 
     else:
         return {"status": "error", "msg": "invalid mission type"}
-    
+
     save_stats_to_db(status, min(100, score))
     return {"status": "success", "mission": status, "final_score": round(score, 2)}
 
+
 def save_stats_to_db(status, score):
-    #db.connect()
-    #db.execute("INSERT INTO stats (mission, score) VALUES (?, ?)", (status, score))
-    #db.close()
+    # db.connect()
+    # db.execute("INSERT INTO stats (mission, score) VALUES (?, ?)", (status, score))
+    # db.close()
+    return True
