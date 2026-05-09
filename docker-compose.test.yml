@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  test-runner:
+    build: ./backend
+    # Override the normal server command to run your test framework instead!
+    command: pytest tests/ -v
+    depends_on:
+    - backend
