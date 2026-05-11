@@ -1,5 +1,5 @@
 # backend/legacy_stats.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -12,41 +12,38 @@ class MissionStats(BaseModel):
     payload_weight: float = 0
 
 
-@router.post("/api/mission_stats", response_model=MissionStats)
+def _calculate_score(m_type: int, dist: float, batt: float, weight: float):
+    if dist <= 0 or batt <= 0:
+        return 0, "unknown"
+
+    if m_type == 1:
+        return (dist * 10) / batt, "recon"
+    if m_type == 2:
+        score = (dist * 5) / batt
+        if weight > 50:
+            score -= (weight * 0.1)
+        return score, "transport"
+
+    return 0, "invalid"
+
+
+@router.post("/api/mission_stats")
 def calc_stats(data: MissionStats):
-    try:
-        mission_type = data.mission_type
-        distance = data.distance
-        battery = data.battery
-        payload_weight = data.payload_weight
-    except KeyError:
-        raise HTTPException(status_code=400, detail="Missing required data")
+    score, status = _calculate_score(
+        data.mission_type, data.distance, data.battery, data.payload_weight
+    )
 
-    score = 0
-    status = "unknown"
-
-    if mission_type == 1:
-        status = "recon"
-        if distance > 0 and battery > 0:
-            score = (distance * 10) / battery
-        else:
-            score = 0
-
-    elif mission_type == 2:
-        status = "transport"
-        battery = data.battery
-        if distance > 0 and battery > 0:
-            score = (distance * 5) / battery
-            if payload_weight > 50:
-                score = score - (payload_weight * 0.1)
-        else:
-            score = 0
-
-    else:
+    if status == "invalid":
         return {"status": "error", "msg": "invalid mission type"}
 
-    save_stats_to_db(status, min(100, score))
-    return {"status": "success", "mission": status, "final_score": round(score, 2)}
+    final_score = min(100, score)
+    save_stats_to_db(status, final_score)
+
+    return {
+        "status": "success",
+        "mission": status,
+        "final_score": round(final_score, 2)
+    }
 
 
 def save_stats_to_db(status, score):
