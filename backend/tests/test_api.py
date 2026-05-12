@@ -1,7 +1,9 @@
 from fastapi.testclient import TestClient
-from main import app # Import your actual app
+from main import app  # Import your actual app
 
 client = TestClient(app)
+
+
 def test_unauthorized_move():
     # Attempting to move without a token
     response = client.post("/api/move", json={"x": 10, "y": 10})

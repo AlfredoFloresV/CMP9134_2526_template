@@ -33,7 +33,9 @@ class RobotClient:
         """Fetch current robot status (position, battery, state)."""
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"{self._base}/api/status", timeout=5.0)
+                response = await client.get(
+                    f"{self._base}/api/status", timeout=5.0
+                )
                 response.raise_for_status()
                 return response.json()
         except Exception as exc:
@@ -41,14 +43,15 @@ class RobotClient:
 
     async def move(self, x: int, y: int) -> dict[str, Any]:
         """Send a move command to the robot."""
-        raise NotImplementedError("Move command not implemented yet")  # TODO: implement this method
+        raise NotImplementedError("Move command not implemented yet")  
+    # TODO: implement this method
 
     async def reset(self) -> dict[str, Any]:
         """Reset the robot simulation."""
-        raise NotImplementedError("Reset command not implemented yet")  # TODO: implement this method
-    
-    # TODO: add get_map(), get_sensors(), etc. as needed
+        raise NotImplementedError("Reset command not implemented yet")  
+    # TODO: implement this method
 
+    # TODO: add get_map(), get_sensors(), etc. as needed
 
 # Module-level singleton used by main.py
 robot = RobotClient()

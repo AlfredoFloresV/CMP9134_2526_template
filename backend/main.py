@@ -52,7 +52,9 @@ from legacy_stats import router as legacy_router
 ROBOT_API_URL = os.getenv("ROBOT_API_URL", "http://localhost:5000")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
 
-ENABLE_ADVANCED_STATS = os.getenv("FF_ADVANCED_STATS", "false").lower() == "true"
+ENABLE_ADVANCED_STATS = os.getenv(
+        "FF_ADVANCED_STATS", "false"
+    ).lower() == "true"
 
 # ── Logging setup ──────────────────────────────────────────────────────────
 # basicConfig() configures the root logger once at startup.
@@ -62,7 +64,8 @@ ENABLE_ADVANCED_STATS = os.getenv("FF_ADVANCED_STATS", "false").lower() == "true
 # Use `logger.info(...)`, `logger.warning(...)`, `logger.error(...)` etc.
 # throughout your code instead of print().  Benefits:
 #   • Timestamps, severity levels, and module names are added automatically.
-#   • Output can be redirected to files or log aggregators without code changes.
+#   • Output can be redirected to files or log aggregators without code 
+#     changes.
 #   • Verbosity is controlled at runtime via LOG_LEVEL, not by editing code.
 logging.basicConfig(level=LOG_LEVEL.upper())
 logger = logging.getLogger(__name__)
@@ -164,7 +167,8 @@ def health():
 async def get_status():
     """Return the current robot status (position, battery level, state).
 
-    Proxies the request to the Virtual Robot API via ``robot_client.RobotClient``.
+    Proxies the request to the Virtual Robot API via 
+    ``robot_client.RobotClient``.
     Returns the robot's JSON payload directly, or an error dict if the robot
     simulator is unreachable.
     """

@@ -4,6 +4,7 @@ def is_valid_target(x, y):
         return False
     return True
 
+
 # The test
 def test_valid_coordinates():
     # Arrange (Setup inputs)
@@ -13,5 +14,5 @@ def test_valid_coordinates():
     result_good = is_valid_target(good_x, good_y)
     result_bad = is_valid_target(bad_x, bad_y)
     # Assert (Check the outcomes)
-    assert result_good == True
-    assert result_bad == False
+    assert result_good is True
+    assert not result_bad
