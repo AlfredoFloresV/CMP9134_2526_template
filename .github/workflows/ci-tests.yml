@@ -28,6 +28,7 @@ jobs:
         pip install flake8
         flake8 ./backend --count --max-complexity=5 --show-source --statistics
 
-    - name: Run test suite
+    - name: Run test suite on backend
       run: |
+        cd backend
         pytest
