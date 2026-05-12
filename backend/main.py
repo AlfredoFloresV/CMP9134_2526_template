@@ -32,8 +32,9 @@ that FastAPI generates automatically from your code (no extra work required).
 
 import logging
 import os
+import asyncio
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from robot_client import robot, RobotConnectionError
@@ -203,6 +204,7 @@ async def move(x: int, y: int):
     except RobotConnectionError as exc:
         logger.warning("Move command failed: %s", exc)
         return {"error": str(exc)}
+
 
 @app.websocket("/ws/telemetry")
 async def ws_telemetry(websocket: WebSocket):
