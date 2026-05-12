@@ -64,7 +64,7 @@ ENABLE_ADVANCED_STATS = os.getenv(
 # Use `logger.info(...)`, `logger.warning(...)`, `logger.error(...)` etc.
 # throughout your code instead of print().  Benefits:
 #   • Timestamps, severity levels, and module names are added automatically.
-#   • Output can be redirected to files or log aggregators without code 
+#   • Output can be redirected to files or log aggregators without code
 #     changes.
 #   • Verbosity is controlled at runtime via LOG_LEVEL, not by editing code.
 logging.basicConfig(level=LOG_LEVEL.upper())
@@ -167,7 +167,7 @@ def health():
 async def get_status():
     """Return the current robot status (position, battery level, state).
 
-    Proxies the request to the Virtual Robot API via 
+    Proxies the request to the Virtual Robot API via
     ``robot_client.RobotClient``.
     Returns the robot's JSON payload directly, or an error dict if the robot
     simulator is unreachable.

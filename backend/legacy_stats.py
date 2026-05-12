@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+
 class MissionStats(BaseModel):
     mission_type: int
     distance: float
@@ -49,6 +50,6 @@ def save_stats_to_db(status, score):
     # db.connect()
     # db.execute(
     #   "INSERT INTO stats (mission, score) VALUES (?, ?)", (status, score)
-    #)
+    # )
     # db.close()
     return True
