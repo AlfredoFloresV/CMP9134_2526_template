@@ -20,7 +20,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install pytest fastapi
+        pip install pytest fastapi httpx
         # Add any other requirements.txt installations here
 
     - name: Static Analysis (Linting)
