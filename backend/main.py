@@ -195,30 +195,29 @@ def get_experimental_stats():
 #   2. Call the appropriate RobotClient method from robot_client.py.
 #   3. Handle RobotConnectionError (and any other expected errors) gracefully.
 #   4. Return a meaningful JSON response.
-#
-# @app.post("/api/move")
-# async def move(x: int, y: int):
-#     """Send the robot to position (x, y)."""
-#     try:
-#         return await robot.move(x, y)
-#     except RobotConnectionError as exc:
-#         logger.warning("Move command failed: %s", exc)
-#         return {"error": str(exc)}
-#
-# @app.websocket("/ws/telemetry")
-# async def ws_telemetry(websocket: WebSocket):
-#     """Stream live sensor data to a connected browser client.
-#
-#     WebSockets maintain a persistent two-way connection, making them ideal
-#     for low-latency telemetry feeds (position, battery, sensor readings).
-#     Unlike HTTP, you don't need to poll — the server pushes updates.
-#     """
-#     await websocket.accept()
-#     try:
-#         while True:
-#             data = await robot.get_status()
-#             await websocket.send_json(data)
-#             await asyncio.sleep(0.5)   # push an update every 500 ms
-#     except WebSocketDisconnect:
-#         logger.info("Telemetry client disconnected")
+@app.post("/api/move")
+async def move(x: int, y: int):
+    """Send the robot to position (x, y)."""
+    try:
+        return await robot.move(x, y)
+    except RobotConnectionError as exc:
+        logger.warning("Move command failed: %s", exc)
+        return {"error": str(exc)}
+
+@app.websocket("/ws/telemetry")
+async def ws_telemetry(websocket: WebSocket):
+    """Stream live sensor data to a connected browser client.
+
+    WebSockets maintain a persistent two-way connection, making them ideal
+    for low-latency telemetry feeds (position, battery, sensor readings).
+    Unlike HTTP, you don't need to poll — the server pushes updates.
+    """
+    await websocket.accept()
+    try:
+        while True:
+            data = await robot.get_status()
+            await websocket.send_json(data)
+            await asyncio.sleep(0.5)   # push an update every 500 ms
+    except WebSocketDisconnect:
+        logger.info("Telemetry client disconnected")
 # Read the feature flag, defaulting to "false" if not set
