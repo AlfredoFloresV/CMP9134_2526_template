@@ -1,0 +1,127 @@
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #f5f5f5;
+  background-color: #0f172a; /* Slate 900 */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #0f172a;
+  color: #f5f5f5;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ── MAIN LAYOUT ────────────────────────────────────────────────────────── */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Grid & Controls layout container below the header */
+.main-content {
+  padding: 2rem 3rem; /* Preserves your exact spacing for the rest of the UI */
+  flex-grow: 1;
+}
+
+/* ── HEADER RIBBON ──────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  /* The separate dark ribbon background */
+  background-color: #0b0f19; /* Deeper slate-black to contrast with your blocks */
+  border-bottom: 1px solid #1e293b; /* Subtle separation line */
+  
+  /* Left/Right padding matches the main-content horizontal alignment */
+  padding: 1.25rem 3rem; 
+  width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Logo image container */
+.logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  background-color: #1e293b; /* Slate 800 */
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Placeholder image behavior */
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Dropdown/menu area */
+.menu select {
+  width: 280px;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 14px;
+  background-color: #1e293b;
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  cursor: pointer;
+}
+
+/* User info section */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #1e293b;
+  padding: 1rem 1.5rem;
+  border-radius: 18px;
+  min-width: 280px;
+}
+
+.avatar {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background-color: #334155; /* Slate 700 */
+}
+
+.user-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+}
+
+.user-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.user-role {
+  color: #94a3b8; /* Slate 400 */
+  font-size: 0.95rem;
+}
