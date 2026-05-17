@@ -48,23 +48,37 @@ services:
     #   retries  — how many consecutive failures before marking unhealthy.
     #   start_period — grace period after container start during which
     #                  failures do NOT count (gives the app time to boot).
+    # healthcheck:
+    #   test: [ "CMD", "curl", "-sf", "http://localhost:5000/docs" ]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 15s
+
+  # ── MySQL database ────────────────────────────────────────────────────
+  database:
+    image: mysql:8.4
+
+    restart: unless-stopped
+
+    environment:
+      MYSQL_DATABASE: se_assessment1_rms
+      MYSQL_USER: rms_user
+      MYSQL_PASSWORD: z61kbNQgrbi6sS7oNOw9CGVx
+      MYSQL_ROOT_PASSWORD: 4s3g4jIQxwEjsn9tbzrGBFL2
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - db_data:/var/lib/mysql
+
     healthcheck:
-      test: [ "CMD", "curl", "-sf", "http://localhost:5000/docs" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
-
-  # ── PostgreSQL database (example — uncomment and configure to use) ───
-  #
-  # If your project needs a relational database, uncomment this block.
-  # postgres:16-alpine is a small, production-quality PostgreSQL image.
-  # You would also uncomment the "volumes" section at the bottom so the
-  # database data persists between container restarts.
-  # database:
-  #   image: postgres:16-alpine
-  #   restart: unless-stopped
-  # ...
+      start_period: 20s
 
   # ── FastAPI backend ───────────────────────────────────────────────────
   #
@@ -96,6 +110,14 @@ services:
       # Inside Docker's network, services reach each other by service name.
       # So "http://robot-api:5000" resolves to the robot-api container.
       ROBOT_API_URL: "http://robot-api:5000"
+
+      # Database connection vars
+      DB_HOST: "database"
+      DB_PORT: "3306"
+      DB_NAME: "se_assessment1_rms"
+      DB_USER: "rms_user"
+      DB_PASSWORD: "z61kbNQgrbi6sS7oNOw9CGVx"
+
       LOG_LEVEL: "${LOG_LEVEL:-info}"
       FF_ADVANCED_STATS: "true"
 
@@ -150,6 +172,6 @@ services:
 # Named volumes persist data OUTSIDE the container's filesystem, so
 # database data survives container restarts and re-creates.
 # Uncomment when you enable the database service above.
-# volumes:
-#   db_data:          # uncomment when database service is enabled
-#     name: gcs_db_data
+volumes:
+  db_data:
+    name: gcs_db_data
