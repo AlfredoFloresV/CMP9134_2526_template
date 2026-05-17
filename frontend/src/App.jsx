@@ -1,5 +1,6 @@
 import Header from "./components/Header"
 import SidePanel from "./components/SidePanel"
+import ButtonPanel from "./components/ButtonPanel"
 
 import "./index.css"
 
@@ -20,6 +21,8 @@ function App() {
           <SidePanel />
 
         </div>
+
+        <ButtonPanel />
 
       </main>
 
