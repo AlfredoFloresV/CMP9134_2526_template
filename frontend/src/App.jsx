@@ -1,0 +1,34 @@
+import Header from "./components/Header"
+import SidePanel from "./components/SidePanel"
+import ButtonPanel from "./components/ButtonPanel"
+import Grid from "./components/Grid"
+
+import "./index.css"
+
+function App() {
+  return (
+    <div className="app">
+
+      <Header />
+
+      <main className="main-content">
+
+        <div className="dashboard-layout">
+
+          <div className="grid-placeholder">
+            <Grid />
+          </div>
+
+          <SidePanel />
+
+        </div>
+
+        <ButtonPanel />
+
+      </main>
+
+    </div>
+  )
+}
+
+export default App

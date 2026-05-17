@@ -1,0 +1,382 @@
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #f5f5f5;
+  background-color: #0f172a; /* Slate 900 */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #0f172a;
+  color: #f5f5f5;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ── MAIN LAYOUT ────────────────────────────────────────────────────────── */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Grid & Controls layout container below the header */
+.main-content {
+  padding: 2rem 3rem; /* Preserves your exact spacing for the rest of the UI */
+  flex-grow: 1;
+}
+
+/* ── HEADER RIBBON ──────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  /* The separate dark ribbon background */
+  background-color: #0b0f19; /* Deeper slate-black to contrast with your blocks */
+  border-bottom: 1px solid #1e293b; /* Subtle separation line */
+  
+  /* Left/Right padding matches the main-content horizontal alignment */
+  padding: 1.25rem 3rem; 
+  width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Logo image container */
+.logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  background-color: #1e293b; /* Slate 800 */
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Placeholder image behavior */
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Dropdown/menu area */
+.menu select {
+  width: 280px;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 14px;
+  background-color: #1e293b;
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  cursor: pointer;
+}
+
+/* User info section */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #1e293b;
+  padding: 1rem 1.5rem;
+  border-radius: 18px;
+  min-width: 280px;
+}
+
+.avatar {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background-color: #334155; /* Slate 700 */
+}
+
+.user-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+}
+
+.user-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.user-role {
+  color: #94a3b8; /* Slate 400 */
+  font-size: 0.95rem;
+}
+/* ── DASHBOARD COMPOSITION ─────────────────────────────────────────────── */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px; /* Map expands dynamically, Side Panel locks at 320px */
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* Temporary style for your central map grid workspace */
+.grid-placeholder {
+  background-color: #1e293b;
+  border-radius: 18px;
+  min-height: 550px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #64748b;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border: 2px dashed #334155;
+}
+
+/* ── SIDE PANEL CONTAINER ───────────────────────────────────────────────── */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* ── STATUS BLOCKS ──────────────────────────────────────────────────────── */
+.status-card {
+  background-color: #1e293b; /* Slate 800 matching header elements */
+  border-radius: 18px;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.status-card h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.status-row:last-child {
+  margin-bottom: 0;
+}
+
+.status-label {
+  color: #94a3b8; /* Slate 400 */
+  font-size: 0.95rem;
+}
+
+/* Custom Tech Battery Display Capsule */
+.battery-container {
+  width: 140px;
+  height: 22px;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 3px;
+  overflow: hidden;
+}
+
+.battery-fill {
+  height: 100%;
+  background-color: #10b981; /* Clean Emerald Green indicator */
+  border-radius: 20px;
+}
+
+.status-value.active {
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Numeric Coordinate Output Box */
+.coordinate-box {
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1rem;
+  color: #f5f5f5;
+  line-height: 1.4;
+}
+
+/* ── MOVEMENT D-PAD (3x3 Grid Layout Matrix) ─────────────────────────────── */
+.control-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 0.75rem;
+  width: 220px;
+  margin: 0 auto; /* Center alignment directly matching wireframe symmetry */
+}
+
+.pad-btn {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  color: #ffffff;
+  border-radius: 14px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  aspect-ratio: 1; /* Locks layout elements into precise squares */
+  transition: all 0.15s ease;
+}
+
+.pad-btn:hover {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.pad-btn:active {
+  transform: scale(0.95);
+}
+
+/* Shifting the native buttons into correct 3x3 layout coordinate map zones */
+.pad-btn.up    { grid-area: 1 / 2; }
+.pad-btn.left  { grid-area: 2 / 1; }
+.pad-btn.right { grid-area: 2 / 3; }
+.pad-btn.down  { grid-area: 3 / 2; }
+
+/* ── ACTION BUTTONS PANEL LAYOUT ───────────────────────────────────────── */
+.action-buttons {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+  width: 100%;
+}
+
+/* ── BASE BUTTON STYLES (TACTILE UTILITY) ───────────────────────────────── */
+.regular-button, 
+.emergency-button {
+  flex: 1; /* Allows buttons to expand and share space evenly */
+  padding: 1.1rem 2rem;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: 14px; /* Perfectly matches your menu dropdown radius */
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.15s ease-in-out;
+}
+
+/* ── REGULAR BUTTONS (SLATE THEME) ──────────────────────────────────────── */
+.regular-button {
+  background-color: #1e293b; /* Slate 800 matching your header & cards */
+  border: 1px solid #334155; /* Slate 700 border */
+  color: #f5f5f5;
+}
+
+.regular-button:hover {
+  background-color: #334155; /* Slate 700 on hover */
+  border-color: #475569;
+}
+
+.regular-button:active {
+  background-color: #0f172a; /* Dips into Slate 900 when pressed */
+  transform: scale(0.98);
+}
+
+/* ── EMERGENCY STOP BUTTON (CRITICAL WARNING RED) ───────────────────────── */
+.emergency-button {
+  background-color: #dc2626; /* Deep, authoritative industrial red */
+  border: 1px solid #ef4444; /* Brighter red highlight edge */
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25); /* Subtle warning glow */
+}
+
+.emergency-button:hover {
+  background-color: #ef4444; /* Vibrant red on hover */
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4); /* Stronger glow intention */
+}
+
+.emergency-button:active {
+  background-color: #b91c1c; /* Deep blood red compressed state */
+  transform: scale(0.97); /* Slightly deeper click compression for weight */
+}
+
+/* ── GRID MAP ─────────────────────────────────────────────── */
+
+.grid-wrapper {
+  flex: 1;
+
+  background-color: #1e293b;
+
+  border-radius: 24px;
+
+  padding: 1.5rem;
+
+  overflow: auto;
+}
+
+.grid-map {
+  display: grid;
+
+  grid-template-columns: repeat(21, 1fr);
+
+  gap: 4px;
+}
+
+.grid-cell {
+  aspect-ratio: 1 / 1;
+
+  background-color: #334155;
+
+  border-radius: 6px;
+
+  position: relative;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition: background-color 0.15s ease;
+}
+
+.grid-cell:hover {
+  background-color: #475569;
+}
+
+/* Coordinate labels */
+.cell-coord {
+  font-size: 0.55rem;
+
+  color: #94a3b8;
+
+  user-select: none;
+}
+
+/* Robot */
+.robot-cell {
+  background-color: #3b82f6;
+}
+
+/* Obstacles */
+.obstacle-cell {
+  background-color: #ef4444;
+}
+
+.origin-cell {
+  background-color: #86efac;
+}
