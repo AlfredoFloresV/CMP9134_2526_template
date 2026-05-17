@@ -8,7 +8,7 @@ function Header() {
         </div>
 
         <div className="menu">
-          <select>
+          <select aria-label="Navigation Menu">
             <option>Dashboard</option>
             <option>Telemetry</option>
             <option>Mission logs</option>

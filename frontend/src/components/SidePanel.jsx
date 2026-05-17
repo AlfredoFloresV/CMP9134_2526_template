@@ -28,11 +28,14 @@ function SidePanel() {
       </div>
 
       {/* Movement D-Pad Control Block */}
+      <div>
+        <h2>Move robot</h2>
+      </div>
       <div className="control-pad">
-        <button className="pad-btn up">↑</button>
-        <button className="pad-btn left">←</button>
-        <button className="pad-btn right">→</button>
-        <button className="pad-btn down">↓</button>
+        <button className="pad-btn up" aria-label="Move Robot Up">↑</button>
+        <button className="pad-btn left" aria-label="Move Robot Left">←</button>
+        <button className="pad-btn right" aria-label="Move Robot Right">→</button>
+        <button className="pad-btn down" aria-label="Move Robot Down">↓</button>
       </div>
     </aside>
   )
