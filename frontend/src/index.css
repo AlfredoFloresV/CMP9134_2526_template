@@ -125,3 +125,134 @@ body {
   color: #94a3b8; /* Slate 400 */
   font-size: 0.95rem;
 }
+/* ── DASHBOARD COMPOSITION ─────────────────────────────────────────────── */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px; /* Map expands dynamically, Side Panel locks at 320px */
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* Temporary style for your central map grid workspace */
+.grid-placeholder {
+  background-color: #1e293b;
+  border-radius: 18px;
+  min-height: 550px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #64748b;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border: 2px dashed #334155;
+}
+
+/* ── SIDE PANEL CONTAINER ───────────────────────────────────────────────── */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* ── STATUS BLOCKS ──────────────────────────────────────────────────────── */
+.status-card {
+  background-color: #1e293b; /* Slate 800 matching header elements */
+  border-radius: 18px;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.status-card h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.status-row:last-child {
+  margin-bottom: 0;
+}
+
+.status-label {
+  color: #94a3b8; /* Slate 400 */
+  font-size: 0.95rem;
+}
+
+/* Custom Tech Battery Display Capsule */
+.battery-container {
+  width: 140px;
+  height: 22px;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 3px;
+  overflow: hidden;
+}
+
+.battery-fill {
+  height: 100%;
+  background-color: #10b981; /* Clean Emerald Green indicator */
+  border-radius: 20px;
+}
+
+.status-value.active {
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Numeric Coordinate Output Box */
+.coordinate-box {
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1rem;
+  color: #f5f5f5;
+  line-height: 1.4;
+}
+
+/* ── MOVEMENT D-PAD (3x3 Grid Layout Matrix) ─────────────────────────────── */
+.control-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 0.75rem;
+  width: 220px;
+  margin: 0 auto; /* Center alignment directly matching wireframe symmetry */
+}
+
+.pad-btn {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  color: #ffffff;
+  border-radius: 14px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  aspect-ratio: 1; /* Locks layout elements into precise squares */
+  transition: all 0.15s ease;
+}
+
+.pad-btn:hover {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.pad-btn:active {
+  transform: scale(0.95);
+}
+
+/* Shifting the native buttons into correct 3x3 layout coordinate map zones */
+.pad-btn.up    { grid-area: 1 / 2; }
+.pad-btn.left  { grid-area: 2 / 1; }
+.pad-btn.right { grid-area: 2 / 3; }
+.pad-btn.down  { grid-area: 3 / 2; }
