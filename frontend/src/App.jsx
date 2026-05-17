@@ -1,6 +1,7 @@
 import Header from "./components/Header"
 import SidePanel from "./components/SidePanel"
 import ButtonPanel from "./components/ButtonPanel"
+import Grid from "./components/Grid"
 
 import "./index.css"
 
@@ -15,7 +16,7 @@ function App() {
         <div className="dashboard-layout">
 
           <div className="grid-placeholder">
-            Grid
+            <Grid />
           </div>
 
           <SidePanel />

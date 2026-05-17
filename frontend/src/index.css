@@ -315,3 +315,68 @@ body {
   background-color: #b91c1c; /* Deep blood red compressed state */
   transform: scale(0.97); /* Slightly deeper click compression for weight */
 }
+
+/* ── GRID MAP ─────────────────────────────────────────────── */
+
+.grid-wrapper {
+  flex: 1;
+
+  background-color: #1e293b;
+
+  border-radius: 24px;
+
+  padding: 1.5rem;
+
+  overflow: auto;
+}
+
+.grid-map {
+  display: grid;
+
+  grid-template-columns: repeat(21, 1fr);
+
+  gap: 4px;
+}
+
+.grid-cell {
+  aspect-ratio: 1 / 1;
+
+  background-color: #334155;
+
+  border-radius: 6px;
+
+  position: relative;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition: background-color 0.15s ease;
+}
+
+.grid-cell:hover {
+  background-color: #475569;
+}
+
+/* Coordinate labels */
+.cell-coord {
+  font-size: 0.55rem;
+
+  color: #94a3b8;
+
+  user-select: none;
+}
+
+/* Robot */
+.robot-cell {
+  background-color: #3b82f6;
+}
+
+/* Obstacles */
+.obstacle-cell {
+  background-color: #ef4444;
+}
+
+.origin-cell {
+  background-color: #86efac;
+}
