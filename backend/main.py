@@ -243,6 +243,7 @@ async def reset_simulation():
     except RobotConnectionError as exc:
         return {"error": str(exc)}
 
+
 @app.get("/api/sensor")
 async def get_sensor():
     """Return live sensor matrix from the virtual robot."""
