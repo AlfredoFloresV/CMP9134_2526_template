@@ -61,10 +61,11 @@ class RobotClient:
                 response.raise_for_status()
                 return response.json()
         except Exception as exc:
-            raise RobotConnectionError(f"Failed to retrieve map: {exc}") from exc
-      
-    # TODO: add get_sensors(), etc. as needed
+            raise RobotConnectionError(
+                f"Failed to retrieve map: {exc}"
+            ) from exc
 
+    # TODO: add get_sensors(), etc. as needed
 
 
 # Module-level singleton used by main.py

@@ -224,6 +224,7 @@ async def ws_telemetry(websocket: WebSocket):
         logger.info("Telemetry client disconnected")
 # Read the feature flag, defaulting to "false" if not set
 
+
 @app.get("/api/map")
 async def get_map():
     """Return the map.
@@ -233,3 +234,4 @@ async def get_map():
     except RobotConnectionError as exc:
         logger.warning("Could not reach robot API for map: %s", exc)
         return {"error": str(exc)}
+        
