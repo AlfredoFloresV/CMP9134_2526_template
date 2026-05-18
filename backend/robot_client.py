@@ -51,7 +51,21 @@ class RobotClient:
         raise NotImplementedError("Reset command not implemented yet")
     # TODO: implement this method
 
-    # TODO: add get_map(), get_sensors(), etc. as needed
+    async def get_map(self) -> dict[str, Any]:
+        """Get the map"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self._base}/api/map", timeout=5.0
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception as exc:
+            raise RobotConnectionError(
+                f"Failed to retrieve map: {exc}"
+            ) from exc
+
+    # TODO: add get_sensors(), etc. as needed
 
 
 # Module-level singleton used by main.py
