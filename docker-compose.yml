@@ -37,6 +37,9 @@ services:
     # Other options: "no" (never restart), "always", "on-failure".
     restart: unless-stopped
 
+    ports:
+      - "5000:5000"
+
     # A healthcheck lets Docker (and other services via depends_on) know
     # whether this container is actually *ready*, not just running.
     #
@@ -97,6 +100,9 @@ services:
       target: production
 
     restart: unless-stopped
+
+    ports:
+      - "8000:8000"
 
     # Environment variables are injected into the container at runtime.
     # Your Python code reads them with os.environ or a settings library.

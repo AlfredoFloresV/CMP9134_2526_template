@@ -74,7 +74,8 @@
     //                 (running on port 80 inside its container).
     "runServices": [
       "robot-api",
-      "frontend"
+      "frontend",
+      "database"
     ],
     // ============================================================
     // PORT FORWARDING
@@ -96,7 +97,8 @@
     "forwardPorts": [
       "robot-api:5000",
       8000,
-      "frontend:80"
+      "frontend:80",
+      5173
     ],
     // ============================================================
     // PORT LABELS & AUTO-FORWARD BEHAVIOUR
@@ -122,6 +124,10 @@
       "frontend:80": {
         "label": "Frontend",
         // Opens the browser automatically once Nginx is ready.
+        "onAutoForward": "openBrowser"
+      },
+      "5173": {
+        "label": "Frontend (Local Vite)",
         "onAutoForward": "openBrowser"
       }
     },
@@ -152,6 +158,14 @@
     // container's user UID to match your host UID — preventing those
     // permission issues transparently.
     "updateRemoteUserUID": true,
+    // ============================================================
+    // SYSTEM FEATURES
+    // ============================================================
+    "features": {
+      "ghcr.io/devcontainers/features/node:1": {
+        "version": "22"
+      }
+    },
     // ============================================================
     // VS CODE CUSTOMISATIONS
     // ============================================================
