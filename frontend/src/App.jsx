@@ -9,6 +9,7 @@ import "./index.css"
 function App() {
   // Central source of truth for robot telemetry across the layout
   const [telemetry, setTelemetry] = useState({
+    id: "",
     battery: 100,
     status: "IDLE",
     position: { x: 0, y: 0 }
@@ -47,6 +48,7 @@ function App() {
       .catch((err) => console.error("Error fetching map inside App container:", err))
   }, [mapKey])
 
+  // Standard API Polling Loop: Satisfies GitHub Issue #6 (Retrieve Telemetry via API)
   const refreshStatus = () => {
     fetch("http://localhost:8000/api/status")
       .then((res) => {
@@ -56,16 +58,17 @@ function App() {
       .then((data) => {
         if (!data.error) {
           setTelemetry({
+            id: data.id,
             battery: data.battery,
             status: data.status,
             position: data.position
           })
         }
       })
-      .catch((err) => console.error("Error updating telemetry:", err))
+      .catch((err) => console.error("Error updating telemetry snapshot:", err))
   }
 
-  // Poll for telemetry status data continuously every 1 second
+  // Poll the REST API continuously every 1 second
   useEffect(() => {
     refreshStatus()
     const interval = setInterval(refreshStatus, 1000)
@@ -144,13 +147,13 @@ function App() {
       .then((data) => {
         if (data.error) {
           triggerAlert(`Robot rejected move: ${data.error}`)
-        } else {
-          refreshStatus() // Force instant visual sync on success
         }
+        refreshStatus()
       })
       .catch((err) => {
         console.error("Network interface error moving robot:", err)
         triggerAlert("Connection error: Could not reach the server.")
+        refreshStatus()
       })
   }
 
@@ -196,7 +199,7 @@ function App() {
 
           <SidePanel 
             telemetry={telemetry} 
-            onDirectionMove={handleMoveRobot} 
+            onDirectionMove={handleMoveRobot} // Kept exactly as your current working side panel expects
           />
 
         </div>

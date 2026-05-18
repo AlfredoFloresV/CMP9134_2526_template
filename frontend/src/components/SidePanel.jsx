@@ -1,5 +1,5 @@
 function SidePanel({ telemetry, onDirectionMove }) {
-  const { battery, status, position } = telemetry;
+  const { id, battery, status, position } = telemetry;
 
   const handleArrowPress = (direction) => {
     let targetX = position.x;
@@ -17,12 +17,16 @@ function SidePanel({ telemetry, onDirectionMove }) {
     <aside className="side-panel">
       {/* Status Card Block */}
       <div className="status-card">
-        <h2>Status</h2>
+        <h2>Telemetry</h2>
         
+        <div className="status-row">
+          <span className="status-label">Robot ID:</span>
+          <span className="status-value">{id || "Loading..."}</span>
+        </div>
+
         <div className="status-row">
           <span className="status-label">Battery:</span>
           <div className="battery-container">
-            {/* We'll control the width dynamically later */}
             <div className="battery-fill" style={{ width: `${battery}%` }}></div>
           </div>
         </div>
