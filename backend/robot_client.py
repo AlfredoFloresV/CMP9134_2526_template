@@ -71,6 +71,20 @@ class RobotClient:
                 f"Failed to reset simulation: {exc}"
             ) from exc
 
+    async def stop(self) -> dict[str, Any]:
+        """Send an emergency stop command to the robot."""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self._base}/api/stop", timeout=5.0
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception as exc:
+            raise RobotConnectionError(
+                f"Failed to stop robot: {exc}"
+            ) from exc
+
     async def get_map(self) -> dict[str, Any]:
         """Get the map"""
         try:

@@ -1,4 +1,4 @@
-function ButtonPanel({ onResetExecuted }) {
+function ButtonPanel({ onResetExecuted, onStopExecuted }) {
   const handleResetClick = () => {
     fetch("http://localhost:8000/api/reset", {
       method: "POST",
@@ -9,7 +9,6 @@ function ButtonPanel({ onResetExecuted }) {
       })
       .then((data) => {
         if (!data.error && onResetExecuted) {
-          // Tell App.jsx the reset was successful
           onResetExecuted();
         }
       })
@@ -30,7 +29,7 @@ function ButtonPanel({ onResetExecuted }) {
         View Logs
       </button>
 
-      <button className="emergency-button">
+      <button className="emergency-button" onClick={onStopExecuted}>
         Emergency Stop
       </button>
     </div>

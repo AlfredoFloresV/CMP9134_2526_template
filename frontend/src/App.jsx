@@ -7,7 +7,6 @@ import Grid from "./components/Grid"
 import "./index.css"
 
 function App() {
-  // Central source of truth for robot telemetry across the layout
   const [telemetry, setTelemetry] = useState({
     id: "",
     battery: 100,
@@ -15,25 +14,17 @@ function App() {
     position: { x: 0, y: 0 }
   })
 
-  // We use this state to force the Grid to remount and re-fetch the map
   const [mapKey, setMapKey] = useState(0);
-
-  // Shared state to hold map layouts so movement routers can detect obstacles
   const [mapData, setMapData] = useState(null);
-
-  // Notification state to log illegal movements on the screen
   const [alertMessage, setAlertMessage] = useState("");
 
-  // Helper function to trigger a timed UI alert log
   const triggerAlert = (message) => {
     setAlertMessage(message);
-    // Automatically clear the alert notification after 3 seconds
     setTimeout(() => {
       setAlertMessage("");
     }, 3000);
   };
 
-  // Fetch the map data coordinate matrix whenever mapKey updates (on mount or Reset)
   useEffect(() => {
     fetch("http://localhost:8000/api/map")
       .then((response) => {
@@ -48,7 +39,6 @@ function App() {
       .catch((err) => console.error("Error fetching map inside App container:", err))
   }, [mapKey])
 
-  // Standard API Polling Loop: Satisfies GitHub Issue #6 (Retrieve Telemetry via API)
   const refreshStatus = () => {
     fetch("http://localhost:8000/api/status")
       .then((res) => {
@@ -57,84 +47,35 @@ function App() {
       })
       .then((data) => {
         if (!data.error) {
-          setTelemetry({
+          // If we manually set the status to STOPPED via the E-Stop, we don't want the 
+          // 1-second polling loop to instantly overwrite it back to IDLE on the next tick.
+          setTelemetry(prev => ({
             id: data.id,
             battery: data.battery,
-            status: data.status,
+            status: prev.status === "STOPPED" && data.status === "IDLE" ? "STOPPED" : data.status,
             position: data.position
-          })
+          }))
         }
       })
       .catch((err) => console.error("Error updating telemetry snapshot:", err))
   }
 
-  // Poll the REST API continuously every 1 second
   useEffect(() => {
     refreshStatus()
     const interval = setInterval(refreshStatus, 1000)
     return () => clearInterval(interval)
   }, [])
 
-  // Consolidated movement router handling query string routing parameters
   const handleMoveRobot = (targetX, targetY) => {
     if (targetX < 0 || targetX > 20 || targetY < 0 || targetY > 20) {
       triggerAlert("Movement failed: Target coordinate is out of bounds.")
       return
     }
 
-    const startX = telemetry.position.x;
-    const startY = telemetry.position.y;
-
-    // Path Obstacle Guard Clause: Check all cells along the movement path
-    if (startX === targetX) {
-      // Vertical line corridor verification loop
-      const minY = Math.min(startY, targetY);
-      const maxY = Math.max(startY, targetY);
-      for (let y = minY; y <= maxY; y++) {
-        const row = (21 - 1) - y;
-        if (mapData?.grid?.[row]?.[targetX] === 1) {
-          triggerAlert("Movement blocked: Path contains an obstacle.");
-          return;
-        }
-      }
-    } else if (startY === targetY) {
-      // Horizontal line corridor verification loop
-      const minX = Math.min(startX, targetX);
-      const maxX = Math.max(startX, targetX);
-      for (let x = minX; x <= maxX; x++) {
-        const row = (21 - 1) - targetY;
-        if (mapData?.grid?.[row]?.[x] === 1) {
-          triggerAlert("Movement blocked: Path contains an obstacle.");
-          return;
-        }
-      }
-    } else {
-      // Multi-axis direct grid click selection path verification
-      const destRow = (21 - 1) - targetY;
-      if (mapData?.grid?.[destRow]?.[targetX] === 1) {
-        triggerAlert("Movement blocked: Target cell is an obstacle.");
-        return;
-      }
-
-      // Check standard path traversal mapping (horizontal segment then vertical segment)
-      let pathBlocked = false;
-      const minX = Math.min(startX, targetX);
-      const maxX = Math.max(startX, targetX);
-      for (let x = minX; x <= maxX; x++) {
-        const row = (21 - 1) - startY;
-        if (mapData?.grid?.[row]?.[x] === 1) pathBlocked = true;
-      }
-      const minY = Math.min(startY, targetY);
-      const maxY = Math.max(startY, targetY);
-      for (let y = minY; y <= maxY; y++) {
-        const row = (21 - 1) - y;
-        if (mapData?.grid?.[row]?.[targetX] === 1) pathBlocked = true;
-      }
-
-      if (pathBlocked) {
-        triggerAlert("Movement blocked: Path contains an obstacle.");
-        return;
-      }
+    const row = (21 - 1) - targetY;
+    if (mapData?.grid?.[row]?.[targetX] === 1) {
+      triggerAlert("Movement blocked: Target cell is an obstacle.");
+      return;
     }
 
     fetch(`http://localhost:8000/api/move?x=${targetX}&y=${targetY}`, {
@@ -147,6 +88,9 @@ function App() {
       .then((data) => {
         if (data.error) {
           triggerAlert(`Robot rejected move: ${data.error}`)
+        } else {
+          // Clear the STOPPED status if a new valid movement command is sent
+          setTelemetry(prev => ({ ...prev, status: "MOVING" }));
         }
         refreshStatus()
       })
@@ -158,9 +102,35 @@ function App() {
   }
 
   const handleReset = () => {
-    // Incrementing the key forces the Grid component to reload
     setMapKey(prevKey => prevKey + 1);
     refreshStatus()
+  };
+
+  // E-Stop Logic: GET current position, POST move to that exact cell
+  const handleStop = () => {
+    fetch("http://localhost:8000/api/status")
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        const { x, y } = data.position;
+
+        fetch(`http://localhost:8000/api/move?x=${x}&y=${y}`, {
+          method: "POST"
+        })
+        .then(() => {
+          // Force the UI status to read STOPPED
+          setTelemetry(prev => ({
+            ...prev,
+            status: "STOPPED",
+            position: { x, y }
+          }));
+          triggerAlert("Emergency Stop Activated!");
+        });
+      })
+      .catch(err => {
+        console.error("E-Stop failed:", err);
+        triggerAlert("Failed to execute Emergency Stop.");
+      });
   };
 
   return (
@@ -168,7 +138,6 @@ function App() {
 
       <Header />
 
-      {/* Standalone alert banner block for logging illegal movements */}
       {alertMessage && (
         <div style={{
           padding: "12px",
@@ -188,7 +157,6 @@ function App() {
         <div className="dashboard-layout">
 
           <div className="grid-placeholder">
-            {/* The key prop connects the reset action to the Grid */}
             <Grid 
               key={mapKey} 
               robotPosition={telemetry.position} 
@@ -199,13 +167,12 @@ function App() {
 
           <SidePanel 
             telemetry={telemetry} 
-            onDirectionMove={handleMoveRobot} // Kept exactly as your current working side panel expects
+            onDirectionMove={handleMoveRobot} 
           />
 
         </div>
 
-        {/* Pass the reset handler down to the buttons */}
-        <ButtonPanel onResetExecuted={handleReset} />
+        <ButtonPanel onResetExecuted={handleReset} onStopExecuted={handleStop} />
 
       </main>
 
