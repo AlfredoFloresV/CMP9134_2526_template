@@ -234,4 +234,3 @@ async def get_map():
     except RobotConnectionError as exc:
         logger.warning("Could not reach robot API for map: %s", exc)
         return {"error": str(exc)}
-        
