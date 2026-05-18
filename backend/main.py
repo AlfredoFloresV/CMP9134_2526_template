@@ -234,3 +234,11 @@ async def get_map():
     except RobotConnectionError as exc:
         logger.warning("Could not reach robot API for map: %s", exc)
         return {"error": str(exc)}
+
+
+@app.post("/api/reset")
+async def reset_simulation():
+    try:
+        return await robot.reset()
+    except RobotConnectionError as exc:
+        return {"error": str(exc)}

@@ -1,8 +1,24 @@
-function ButtonPanel() {
+function ButtonPanel({ onResetExecuted }) {
+  const handleResetClick = () => {
+    fetch("http://localhost:8000/api/reset", {
+      method: "POST",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to reset");
+        return res.json();
+      })
+      .then((data) => {
+        if (!data.error && onResetExecuted) {
+          // Tell App.jsx the reset was successful
+          onResetExecuted();
+        }
+      })
+      .catch((err) => console.error("Reset error:", err));
+  };
+
   return (
     <div className="action-buttons">
-
-      <button className="regular-button">
+      <button className="regular-button" onClick={handleResetClick}>
         Reset
       </button>
 
@@ -17,7 +33,6 @@ function ButtonPanel() {
       <button className="emergency-button">
         Emergency Stop
       </button>
-
     </div>
   )
 }

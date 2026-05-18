@@ -64,6 +64,20 @@ class RobotClient:
             raise RobotConnectionError(
                 f"Failed to retrieve map: {exc}"
             ) from exc
+    
+    async def reset(self) -> dict[str, Any]:
+        """Reset the robot simulation."""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self._base}/api/reset", timeout=5.0
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception as exc:
+            raise RobotConnectionError(
+                f"Failed to reset simulation: {exc}"
+            ) from exc
 
     # TODO: add get_sensors(), etc. as needed
 
