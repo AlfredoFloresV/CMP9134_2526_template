@@ -2,38 +2,10 @@ import { useState, useEffect } from "react";
 
 const GRID_SIZE = 21;
 
-function Grid() {
-  const [mapData, setMapData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+function Grid({ robotPosition, onCellClick, mapData }) {
+  // mapData is now handled directly by props from App.jsx to coordinate obstacle walls
 
-  // Hardcoded for now until live telemetry is running
-  const robotPosition = { x: 5, y: 8 };
-
-  useEffect(() => {
-    fetch("http://localhost:8000/api/map")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        setMapData(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching map:", err);
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) return <div className="grid-message">Loading arena map...</div>;
-  if (error) return <div className="grid-message error">Error: {error}</div>;
+  if (!mapData) return <div className="grid-message">Loading arena map...</div>;
 
   const cells = [];
 
@@ -46,7 +18,7 @@ function Grid() {
       const isRobot = robotPosition.x === x && robotPosition.y === y;
       const isOrigin = x === 0 && y === 0;
 
-      // ⚠️ CORRECT MATRIX INDEXING:
+      // CORRECT MATRIX INDEXING:
       // In Cartesian physics, Y goes up. In standard array matrices, row 0 is the top.
       // To flip it so Cartesian Y=20 is the top row, the matrix row index is (GRID_SIZE - 1 - y).
       const arrayRow = (GRID_SIZE - 1) - y;
@@ -64,7 +36,11 @@ function Grid() {
       }
 
       cells.push(
-        <div key={`${x}-${y}`} className={cellClass}>
+        <div 
+          key={`${x}-${y}`} 
+          className={cellClass}
+          onClick={() => onCellClick(x, y)}
+        >
           <span className="cell-coord">
             {x},{y}
           </span>
