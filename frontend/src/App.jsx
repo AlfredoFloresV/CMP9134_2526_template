@@ -3,6 +3,7 @@ import Header from "./components/Header"
 import SidePanel from "./components/SidePanel"
 import ButtonPanel from "./components/ButtonPanel"
 import Grid from "./components/Grid"
+import SensorRadar from "./components/SensorRadar"
 
 import "./index.css"
 
@@ -17,6 +18,9 @@ function App() {
   const [mapKey, setMapKey] = useState(0);
   const [mapData, setMapData] = useState(null);
   const [alertMessage, setAlertMessage] = useState("");
+  
+  const [sensorData, setSensorData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const triggerAlert = (message) => {
     setAlertMessage(message);
@@ -47,8 +51,6 @@ function App() {
       })
       .then((data) => {
         if (!data.error) {
-          // If we manually set the status to STOPPED via the E-Stop, we don't want the 
-          // 1-second polling loop to instantly overwrite it back to IDLE on the next tick.
           setTelemetry(prev => ({
             id: data.id,
             battery: data.battery,
@@ -89,7 +91,6 @@ function App() {
         if (data.error) {
           triggerAlert(`Robot rejected move: ${data.error}`)
         } else {
-          // Clear the STOPPED status if a new valid movement command is sent
           setTelemetry(prev => ({ ...prev, status: "MOVING" }));
         }
         refreshStatus()
@@ -106,7 +107,6 @@ function App() {
     refreshStatus()
   };
 
-  // E-Stop Logic: GET current position, POST move to that exact cell
   const handleStop = () => {
     fetch("http://localhost:8000/api/status")
       .then(res => res.json())
@@ -118,7 +118,6 @@ function App() {
           method: "POST"
         })
         .then(() => {
-          // Force the UI status to read STOPPED
           setTelemetry(prev => ({
             ...prev,
             status: "STOPPED",
@@ -133,9 +132,22 @@ function App() {
       });
   };
 
+  const handleSensor = () => {
+    fetch("http://localhost:8000/api/sensor")
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        setSensorData(data);
+        setIsModalOpen(true);
+      })
+      .catch(err => {
+        console.error("Sensor read failed:", err);
+        triggerAlert("Failed to retrieve sensor data.");
+      });
+  };
+
   return (
     <div className="app">
-
       <Header />
 
       {alertMessage && (
@@ -153,9 +165,7 @@ function App() {
       )}
 
       <main className="main-content">
-
         <div className="dashboard-layout">
-
           <div className="grid-placeholder">
             <Grid 
               key={mapKey} 
@@ -169,12 +179,76 @@ function App() {
             telemetry={telemetry} 
             onDirectionMove={handleMoveRobot} 
           />
-
         </div>
 
-        <ButtonPanel onResetExecuted={handleReset} onStopExecuted={handleStop} />
-
+        <ButtonPanel 
+          onResetExecuted={handleReset} 
+          onStopExecuted={handleStop} 
+          onSensorClick={handleSensor}
+        />
       </main>
+
+      {/* --- Sensor Modal Overlay --- */}
+      {isModalOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.75)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: "#2c2e33",
+            color: "#e1e1e1",
+            padding: "24px",
+            borderRadius: "8px",
+            width: "90%",
+            maxWidth: "500px", // slightly narrower to fit the radar nicely
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+          }}>
+            <h2 style={{ marginTop: 0, marginBottom: "16px", borderBottom: "1px solid #444", paddingBottom: "12px", textAlign: "center" }}>
+              Live Sensor Diagnostics
+            </h2>
+            
+            {/* The raw JSON pre tag has been swapped out for the visual radar */}
+            <SensorRadar data={sensorData} />
+
+            {/* A small legend to explain the colors */}
+            <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginTop: "10px", fontSize: "14px" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <div style={{ width: "12px", height: "12px", backgroundColor: "#ff4444", borderRadius: "50%" }}></div>
+                Cardinal Sensors
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <div style={{ width: "12px", height: "12px", backgroundColor: "rgba(74, 144, 226, 0.5)", border: "1px solid #4a90e2" }}></div>
+                Lidar Sweep
+              </span>
+            </div>
+
+            <button 
+              onClick={() => setIsModalOpen(false)}
+              style={{
+                marginTop: "20px",
+                padding: "10px 16px",
+                backgroundColor: "#4a90e2",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontWeight: "bold",
+                alignSelf: "center",
+                width: "100%"
+              }}
+            >
+              Close Diagnostics
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   )

@@ -1,4 +1,4 @@
-function ButtonPanel({ onResetExecuted, onStopExecuted }) {
+function ButtonPanel({ onResetExecuted, onStopExecuted, onSensorClick }) {
   const handleResetClick = () => {
     fetch("http://localhost:8000/api/reset", {
       method: "POST",
@@ -21,7 +21,7 @@ function ButtonPanel({ onResetExecuted, onStopExecuted }) {
         Reset
       </button>
 
-      <button className="regular-button">
+      <button className="regular-button" onClick={onSensorClick}>
         Sensor
       </button>
 

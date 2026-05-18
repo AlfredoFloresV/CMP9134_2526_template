@@ -99,6 +99,20 @@ class RobotClient:
                 f"Failed to retrieve map: {exc}"
             ) from exc
 
+    async def get_sensor_data(self) -> dict[str, Any]:
+        """Fetch current obstacle sensor diagnostics from the simulator."""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self._base}/api/sensor", timeout=5.0
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception as exc:
+            raise RobotConnectionError(
+                f"Failed to retrieve sensor telemetry: {exc}"
+            ) from exc
+
     # TODO: add get_sensors(), etc. as needed
 
 

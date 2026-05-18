@@ -242,3 +242,12 @@ async def reset_simulation():
         return await robot.reset()
     except RobotConnectionError as exc:
         return {"error": str(exc)}
+
+@app.get("/api/sensor")
+async def get_sensor():
+    """Return live sensor matrix from the virtual robot."""
+    try:
+        return await robot.get_sensor_data()
+    except RobotConnectionError as exc:
+        logger.warning("Sensor diagnostics unreachable: %s", exc)
+        return {"error": str(exc)}
