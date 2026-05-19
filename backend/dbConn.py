@@ -4,7 +4,7 @@ import hashlib
 import pymysql
 
 pymysql.install_as_MySQLdb()
-import MySQLdb
+import MySQLdb  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +13,23 @@ DB_USER = os.getenv("DB_USER", "rms_user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "z61kbNQgrbi6sS7oNOw9CGVx")
 DB_NAME = os.getenv("DB_NAME", "se_assessment1_rms")
 
-db_config = {"host": DB_HOST, "user": DB_USER, "passwd": DB_PASSWORD, "db": DB_NAME}
+# Global reference placeholder
+conn = None
 
-logger.info("Connecting to MySQL service at host: %s", DB_HOST)
-conn = MySQLdb.connect(**db_config)
+
+def get_db_connection():
+    """Initializes or returns the active db connection connection string."""
+    global conn
+    if conn is None or not conn.open:
+        db_config = {
+            "host": DB_HOST,
+            "user": DB_USER,
+            "passwd": DB_PASSWORD,
+            "db": DB_NAME,
+        }
+        logger.info("Connecting to MySQL service at host: %s", DB_HOST)
+        conn = MySQLdb.connect(**db_config)
+    return conn
 
 
 def secure_hash(text: str) -> str:
@@ -25,7 +38,8 @@ def secure_hash(text: str) -> str:
 
 
 def init_db():
-    cursor = conn.cursor()
+    connection = get_db_connection()
+    cursor = connection.cursor()
 
     try:
         # 1. User Directories Table
@@ -57,39 +71,39 @@ def init_db():
 
             cursor.execute(
                 """
-                INSERT INTO users 
+                INSERT INTO users
                 (username, password_hash, role)
-                VALUES 
+                VALUES
                 (%s, %s, %s);
-            """,
+                """,
                 ("commander", secure_hash("commanderpass123"), "Commander"),
             )
 
             cursor.execute(
                 """
-                INSERT INTO users 
+                INSERT INTO users
                 (username, password_hash, role)
-                VALUES 
+                VALUES
                 (%s, %s, %s);
-            """,
+                """,
                 ("viewer", secure_hash("viewerpass123"), "Viewer"),
             )
 
             cursor.execute(
                 """
-                INSERT INTO users 
+                INSERT INTO users
                 (username, password_hash, role)
-                VALUES 
+                VALUES
                 (%s, %s, %s);
-            """,
+                """,
                 ("auditor", secure_hash("auditorpass123"), "Auditor"),
             )
 
-        conn.commit()
+        connection.commit()
         logger.info("MySQL tables verified and successfully updated.")
 
     except Exception as error:
-        conn.rollback()
+        connection.rollback()
         logger.error("Database startup execution failed: %s", error)
         raise error
     finally:

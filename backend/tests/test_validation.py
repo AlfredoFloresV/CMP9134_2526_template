@@ -4,7 +4,7 @@ from main import is_safe_move  # Imports the math function from main file
 MOCK_GRID = [
     [0, 1, 0],  # Top Row    (Y=2)
     [0, 0, 0],  # Middle Row (Y=1)
-    [1, 0, 0]   # Bottom Row (Y=0)
+    [1, 0, 0],  # Bottom Row (Y=0)
 ]
 
 
@@ -21,3 +21,12 @@ def test_coordinate_and_obstacle_math():
 
     # Test 4: Center cell (1,1) is empty, should pass
     assert is_safe_move(1, 1, MOCK_GRID) is True
+
+
+def test_grid_extreme_boundaries():
+    # Test 5: Verify upper limit boundary constraints (20, 20) are processed
+    large_mock_grid = [[0] * 21 for _ in range(21)]
+
+    assert is_safe_move(20, 20, large_mock_grid) is True
+    assert is_safe_move(21, 20, large_mock_grid) is False
+    assert is_safe_move(20, 21, large_mock_grid) is False
