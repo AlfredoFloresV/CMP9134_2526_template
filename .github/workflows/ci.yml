@@ -99,10 +99,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # just a placeholder for your tests. Implement your actual test commands here, e.g. "pytest ..."
+      # ── Install App Dependencies ─────────────────────────────────────────
+      # Installs pytest along with the missing libraries and core runtime 
+      # modules directly into the host runner's local virtual python context.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest fastapi httpx pymysql cryptography pydantic
+
+      # ── Execute Pytest Suite ─────────────────────────────────────────────
+      # Target the specific backend directory context and trigger the 
+      # comprehensive automated validation checks.
       - name: Run tests with coverage
         run: |
-          true
+          cd backend
+          pytest
 
 
   # ════════════════════════════════════════════════════════════════════════════
