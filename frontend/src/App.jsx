@@ -40,6 +40,10 @@ function App() {
     const [sensorData, setSensorData] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // ── Mission Audit Trail Local Management State ────────────────────────────
+    const [logsList, setLogsList] = useState([]);
+    const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
+
     const triggerAlert = (message) => {
         setAlertMessage(message);
         setTimeout(() => {
@@ -59,6 +63,7 @@ function App() {
                 isAuthenticated: false
             });
             setShowRegisterPopup(false);
+            setIsLogsModalOpen(false);
         } else if (action === "View Logs") {
             const baseUrl = "http://localhost:8000/api/audit/logs";
             const queryParams = `?requesting_user=${currentUser.username}` +
@@ -72,11 +77,8 @@ function App() {
                     return res.json();
                 })
                 .then((data) => {
-                    console.log("Mission audit trail records fetched:", data);
-                    alert(
-                        `Successfully fetched ${data.length} database log records! ` +
-                        `(Check the browser developer console to view the raw payload)`
-                    );
+                    setLogsList(data);
+                    setIsLogsModalOpen(true);
                 })
                 .catch((err) => {
                     console.error(err);
@@ -486,6 +488,140 @@ function App() {
                             }}
                         >
                             Close Diagnostics
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── NON-BLOCKING OPERATIONAL AUDIT LOGS OVERLAY PANEL ── */}
+            {isLogsModalOpen && (
+                <div style={{
+                    position: "fixed",
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: "transparent",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 9999
+                }}>
+                    <div style={{
+                        backgroundColor: "#2c2e33",
+                        color: "#e1e1e1",
+                        padding: "24px",
+                        borderRadius: "8px",
+                        width: "95%",
+                        maxWidth: "850px",
+                        display: "flex",
+                        flexDirection: "column",
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.75)",
+                        fontFamily: "sans-serif"
+                    }}>
+                        <h2 style={{
+                            marginTop: 0,
+                            marginBottom: "16px",
+                            borderBottom: "1px solid #444",
+                            paddingBottom: "12px",
+                            textAlign: "center"
+                        }}>
+                            System Mission Audit Logs
+                        </h2>
+
+                        <div style={{
+                            overflowY: "auto",
+                            maxHeight: "350px",
+                            backgroundColor: "#1e2024",
+                            borderRadius: "4px",
+                            border: "1px solid #444"
+                        }}>
+                            <table style={{
+                                width: "100%",
+                                borderCollapse: "collapse",
+                                fontSize: "14px",
+                                textAlign: "left"
+                            }}>
+                                <thead>
+                                    <tr style={{
+                                        backgroundColor: "#151619",
+                                        color: "#b0b5c1",
+                                        position: "sticky",
+                                        top: 0,
+                                        borderBottom: "2px solid #444"
+                                    }}>
+                                        <th style={{ padding: "12px 8px" }}>ID</th>
+                                        <th style={{ padding: "12px 8px" }}>Timestamp</th>
+                                        <th style={{ padding: "12px 8px" }}>Operator</th>
+                                        <th style={{ padding: "12px 8px" }}>Action</th>
+                                        <th style={{ padding: "12px 8px" }}>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {logsList.length === 0 ? (
+                                        <tr>
+                                            <td
+                                                colSpan="5"
+                                                style={{
+                                                    padding: "20px",
+                                                    textAlign: "center",
+                                                    color: "#777"
+                                                }}
+                                            >
+                                                No mission entries recorded.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        logsList.map((log) => (
+                                            <tr
+                                                key={log.id}
+                                                style={{
+                                                    borderBottom: "1px solid #2a2c30"
+                                                }}
+                                            >
+                                                <td style={{ padding: "10px 8px", color: "#4a90e2" }}>
+                                                    {log.id}
+                                                </td>
+                                                <td style={{ padding: "10px 8px", color: "#888" }}>
+                                                    {log.timestamp}
+                                                </td>
+                                                <td style={{ padding: "10px 8px", fontWeight: "bold" }}>
+                                                    {log.username}
+                                                </td>
+                                                <td style={{ padding: "10px 8px" }}>
+                                                    <span style={{
+                                                        padding: "3px 6px",
+                                                        borderRadius: "3px",
+                                                        backgroundColor: "#151619",
+                                                        fontSize: "12px",
+                                                        color: "#ff8888"
+                                                    }}>
+                                                        {log.action}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: "10px 8px", color: "#b0b5c1" }}>
+                                                    {log.details}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <button
+                            onClick={() => setIsLogsModalOpen(false)}
+                            style={{
+                                marginTop: "20px",
+                                padding: "10px 16px",
+                                backgroundColor: "#4a90e2",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                fontWeight: "bold",
+                                alignSelf: "center",
+                                width: "200px"
+                            }}
+                        >
+                            Close Audit Logs
                         </button>
                     </div>
                 </div>
