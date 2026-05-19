@@ -190,7 +190,8 @@ def get_experimental_stats():
 
 
 def is_safe_move(x: int, y: int, grid: list) -> bool:
-    """Returns True if the coordinates are inside the 21x21 grid and not an obstacle."""
+    """Returns True if the coordinates are inside the 21x21 grid 
+    and not an obstacle."""
     if not (0 <= x <= 20 and 0 <= y <= 20):
         return False
     top_row_index = len(grid) - 1
