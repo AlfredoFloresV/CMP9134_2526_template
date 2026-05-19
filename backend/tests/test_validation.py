@@ -1,18 +1,23 @@
-# The logic (usually imported from your main code)
-def is_valid_target(x, y):
-    if x < 0 or x > 100 or y < 0 or y > 100:
-        return False
-    return True
+from main import is_safe_move  # Imports the math function from main file
+
+# A simple 3x3 mock map to test the logic (1 = obstacle, 0 = empty space)
+MOCK_GRID = [
+    [0, 1, 0],  # Top Row    (Y=2)
+    [0, 0, 0],  # Middle Row (Y=1)
+    [1, 0, 0]   # Bottom Row (Y=0)
+]
 
 
-# The test
-def test_valid_coordinates():
-    # Arrange (Setup inputs)
-    good_x, good_y = 50, 50
-    bad_x, bad_y = 150, -10
-    # Act (Run the function)
-    result_good = is_valid_target(good_x, good_y)
-    result_bad = is_valid_target(bad_x, bad_y)
-    # Assert (Check the outcomes)
-    assert result_good is True
-    assert not result_bad
+def test_coordinate_and_obstacle_math():
+    # Test 1: Out of bounds completely should fail
+    assert is_safe_move(-1, 5, MOCK_GRID) is False
+    assert is_safe_move(5, 21, MOCK_GRID) is False
+
+    # Test 2: Bottom-left corner (0,0) has an obstacle, should fail
+    assert is_safe_move(0, 0, MOCK_GRID) is False
+
+    # Test 3: Top-middle (1,2) has an obstacle, should fail
+    assert is_safe_move(1, 2, MOCK_GRID) is False
+
+    # Test 4: Center cell (1,1) is empty, should pass
+    assert is_safe_move(1, 1, MOCK_GRID) is True

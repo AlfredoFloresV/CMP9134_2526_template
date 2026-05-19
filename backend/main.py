@@ -189,6 +189,15 @@ def get_experimental_stats():
     return {"status": "success", "data": "Top secret advanced stats!"}
 
 
+def is_safe_move(x: int, y: int, grid: list) -> bool:
+    """Returns True if the coordinates are inside the 21x21 grid
+    and not an obstacle."""
+    if not (0 <= x <= 20 and 0 <= y <= 20):
+        return False
+    top_row_index = len(grid) - 1
+    return grid[top_row_index - y][x] == 0
+
+
 # ── TODO: add your routes below ────────────────────────────────────────────
 # Use the skeletons below as starting points.  Each route should:
 #   1. Validate inputs — FastAPI does this automatically when you add type
@@ -233,4 +242,22 @@ async def get_map():
         return await robot.get_map()
     except RobotConnectionError as exc:
         logger.warning("Could not reach robot API for map: %s", exc)
+        return {"error": str(exc)}
+
+
+@app.post("/api/reset")
+async def reset_simulation():
+    try:
+        return await robot.reset()
+    except RobotConnectionError as exc:
+        return {"error": str(exc)}
+
+
+@app.get("/api/sensor")
+async def get_sensor():
+    """Return live sensor matrix from the virtual robot."""
+    try:
+        return await robot.get_sensor_data()
+    except RobotConnectionError as exc:
+        logger.warning("Sensor diagnostics unreachable: %s", exc)
         return {"error": str(exc)}
