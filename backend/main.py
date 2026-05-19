@@ -5,51 +5,25 @@ Ground Control Station — FastAPI application entry point.
 This module is the heart of the backend.  FastAPI reads this file when the
 server starts and uses the `app` object defined here to handle every incoming
 HTTP request.
-
-Key concepts demonstrated in this file
----------------------------------------
-* **FastAPI application factory** — how to create and configure an `app`.
-* **CORS middleware** — what Cross-Origin Resource Sharing is and why it's
-  needed when a browser frontend talks to a separate backend server.
-* **Environment variables** — the standard way to inject runtime configuration
-  (URLs, log levels, secrets) without hard-coding values.
-* **Structured logging** — using Python's built-in `logging` module rather
-  than plain `print()` calls, which is the industry standard.
-* **Async route handlers** — why `async def` matters for I/O-bound work like
-  HTTP calls to a robot API.
-* **Error handling** — catching specific exceptions and returning meaningful
-  responses instead of letting the server crash.
-
-Running the server locally
---------------------------
-From the `backend/` directory:
-
-    uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-Then visit http://localhost:8000/docs for the interactive API documentation
-that FastAPI generates automatically from your code (no extra work required).
 """
 
 import logging
 import os
 import asyncio
+import hashlib
+from typing import Optional, List, Literal
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from robot_client import robot, RobotConnectionError
 from legacy_stats import router as legacy_router
 
+# ── Import database initialization function ─────────────────────────────────
+from dbConn import init_db
+
 # ── Configuration from environment variables ───────────────────────────────
-# os.getenv(key, default) reads a value from the process environment.
-# If the variable is not set, the second argument is used as a fallback.
-#
-# Why environment variables instead of hard-coded strings?
-#   • Different environments (dev / staging / production) can use different
-#     values without changing source code.
-#   • Secrets (API keys, passwords) are never committed to version control.
-#   • The values can be overridden in docker-compose.yml or a .env file
-#     without touching this file.
 ROBOT_API_URL = os.getenv("ROBOT_API_URL", "http://localhost:5000")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
 
@@ -58,29 +32,36 @@ ENABLE_ADVANCED_STATS = os.getenv(
     ).lower() == "true"
 
 # ── Logging setup ──────────────────────────────────────────────────────────
-# basicConfig() configures the root logger once at startup.
-# LOG_LEVEL.upper() converts e.g. "info" → "INFO" to match the constants
-# expected by the logging module (logging.INFO, logging.DEBUG, etc.).
-#
-# Use `logger.info(...)`, `logger.warning(...)`, `logger.error(...)` etc.
-# throughout your code instead of print().  Benefits:
-#   • Timestamps, severity levels, and module names are added automatically.
-#   • Output can be redirected to files or log aggregators without code
-#     changes.
-#   • Verbosity is controlled at runtime via LOG_LEVEL, not by editing code.
 logging.basicConfig(level=LOG_LEVEL.upper())
 logger = logging.getLogger(__name__)
-# __name__ is the module's fully-qualified name (e.g. "main").
-# Using __name__ means log messages identify which module produced them.
+
+
+# ── Pydantic Data Models (Workshop Task 5 & 13 Aligned) ─────────────────────
+
+# User Account Schema for Registration (a)
+class UserAccount(BaseModel):
+    id: Optional[int] = None
+    username: str
+    password: str  # Plain text over wire transit
+    role: Literal['Commander', 'Viewer', 'Auditor']
+
+
+# User Login Request Input Model (b)
+class UserLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+# System Operational Log Schema (d)
+class MissionLogEntry(BaseModel):
+    id: Optional[int] = None
+    timestamp: Optional[str] = None
+    username: str
+    action: str
+    details: Optional[str] = None
 
 
 # ── Application factory ────────────────────────────────────────────────────
-# FastAPI() creates the ASGI application object.  Everything—routes,
-# middleware, startup hooks—is registered on this object.
-#
-# The metadata arguments (title, description, version) appear in:
-#   • The auto-generated /docs (Swagger UI) page.
-#   • The /openapi.json schema that clients can use to generate SDK code.
 app = FastAPI(
     title="Ground Control Station",
     description="CMP9134 — Robot Management System scaffold",
@@ -90,27 +71,18 @@ app = FastAPI(
 app.include_router(legacy_router)
 
 
+# ── Database Bootstrapping Hook ─────────────────────────────────────────────
+@app.on_event("startup")
+def on_startup():
+    """Triggers verification and creation of tables on application launch."""
+    logger.info("Application starting up. Verifying core system tables...")
+    try:
+        init_db()
+    except Exception as exc:
+        logger.error("CRITICAL: Database initialization failed: %s", exc)
+
+
 # ── CORS middleware ────────────────────────────────────────────────────────
-# Browsers enforce the Same-Origin Policy: a web page served from one origin
-# (e.g. http://localhost:3000) is NOT allowed to make fetch() requests to a
-# different origin (e.g. http://localhost:8000) unless that second origin
-# explicitly opts in via CORS headers.
-#
-# CORSMiddleware adds the necessary HTTP response headers so the browser
-# permits the cross-origin request.
-#
-# allow_origins=["*"]
-#   Permit requests from ANY origin.  Fine for development or a controlled
-#   lab network, but in production you should list specific allowed origins
-#   (e.g. ["https://yourapp.example.com"]) to prevent abuse.
-#
-# allow_credentials=True
-#   Allow cookies and HTTP authentication headers to be sent cross-origin.
-#   Note: this cannot be combined with allow_origins=["*"] in a real
-#   production deployment — the browser will reject it.
-#
-# allow_methods=["*"], allow_headers=["*"]
-#   Don't restrict which HTTP verbs or request headers are allowed.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -120,64 +92,153 @@ app.add_middleware(
 )
 
 
+# ── Password Hashing Helper ────────────────────────────────────────────────
+def secure_hash(text: str) -> str:
+    """Computes a SHA-256 signature string to avoid plain-text storage."""
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+
+# ── Internal Audit Logging Utility (c) ──────────────────────────────────────
+def emit_audit_log(username: str, action: str, details: str = None):
+    """Internal helper to drop structured operational logs to the database."""
+    from dbConn import conn
+    cursor = conn.cursor()
+    query = "INSERT INTO mission_logs (username, action, details) VALUES (%s, %s, %s)"
+    try:
+        cursor.execute(query, (username, action, details))
+        conn.commit()  # Commits structural modifications exactly like Task 13
+    except Exception as error:
+        conn.rollback()
+        logger.error("Failed to commit automated background audit trail record: %s", error)
+    finally:
+        cursor.close()
+
+
+# ── Authentication & RBAC Endpoints (a, b & d) ──────────────────────────────
+
+@app.post("/api/auth/register", response_model=UserAccount)
+def register_user(user: UserAccount):
+    """Creates a new operational user account profile inside the database (a)."""
+    from dbConn import conn
+    cursor = conn.cursor()
+    
+    # Pre-flight check: Ensure user doesn't already exist (Two-step pattern like Task 15)
+    cursor.execute("SELECT id FROM users WHERE username = %s", (user.username,))
+    if cursor.fetchone() is not None:
+        cursor.close()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Registration failed: Username '{user.username}' already exists."
+        )
+        
+    query = "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)"
+    hashed_password = secure_hash(user.password)
+    
+    try:
+        cursor.execute(query, (user.username, hashed_password, user.role))
+        conn.commit()  # Commits the creation to the database like Task 13
+        new_id = cursor.lastrowid
+    except Exception as error:
+        conn.rollback()  # Issues transaction rollback exactly like Task 13
+        cursor.close()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not create user account: {error}",
+        )
+    finally:
+        cursor.close()
+        
+    return UserAccount(
+        id=new_id, username=user.username, password="[PROTECTED]", role=user.role
+    )
+
+
+@app.post("/api/auth/login")
+def login_session(request: UserLoginRequest):
+    """Verifies profile signatures against stored database records to log in (b)."""
+    from dbConn import conn
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        "SELECT password_hash, role FROM users WHERE username = %s", 
+        (request.username,)
+    )
+    row = cursor.fetchone()
+    cursor.close()
+    
+    if row is None:
+        raise HTTPException(status_code=404, detail="Identity profile not found.")
+        
+    stored_hash, role = row[0], row[1]
+    computed_hash = secure_hash(request.password)
+    
+    if computed_hash != stored_hash:
+        raise HTTPException(status_code=401, detail="Invalid credential combination.")
+        
+    # Document user login action dynamically using our utility function (c)
+    emit_audit_log(request.username, "LOGIN", f"User logged in successfully with {role} role.")
+        
+    return {
+        "status": "authenticated",
+        "username": request.username,
+        "role": role,
+        "message": f"Welcome back, {request.username} ({role})."
+    }
+
+
+@app.get("/api/audit/logs", response_model=List[MissionLogEntry])
+def fetch_mission_audit_trail(requesting_user: str, role: str):
+    """Returns chronologically ordered system logs. Restricted access check (d)."""
+    # Strict Role-Based Access Control Rule
+    if role not in ["Commander", "Auditor"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Access Forbidden: Profile holds insufficient clearance to review logs."
+        )
+        
+    from dbConn import conn
+    cursor = conn.cursor()
+    
+    # Query logs sorted chronologically exactly like workshop Task 14 data mapping
+    cursor.execute("SELECT id, timestamp, username, action, details FROM mission_logs ORDER BY timestamp DESC")
+    rows = cursor.fetchall()
+    cursor.close()
+    
+    return [
+        MissionLogEntry(
+            id=row[0],
+            timestamp=str(row[1]),
+            username=row[2],
+            action=row[3],
+            details=row[4]
+        )
+        for row in rows
+    ]
+
+
 # ── Health check ───────────────────────────────────────────────────────────
-# A health check endpoint is a simple route that returns 200 OK when the
-# server is running correctly.  It is called by:
-#   • Docker — via the HEALTHCHECK instruction in the Dockerfile, which marks
-#     the container "healthy" once this endpoint responds successfully.
-#   • The CI pipeline — the compose-test job polls this URL before running
-#     further tests (see .github/workflows/ci.yml).
-#   • Load balancers — to decide whether to route traffic to this instance.
-#
-# include_in_schema=False hides this internal route from the /docs page
-# because it is infrastructure plumbing, not part of the public API.
-#
-# Note: this is a plain `def` (synchronous), not `async def`.  That is fine
-# here because the function does no I/O — it just returns a dict immediately.
-# FastAPI handles both sync and async handlers correctly.
 @app.get("/health", include_in_schema=False)
 def health():
     return {"status": "ok"}
 
 
-# ── Robot status proxy ─────────────────────────────────────────────────────
-# TODO: add authentication, RBAC, and mission logging around these endpoints.
-#
-# This route is `async def` because it calls `await robot.get_status()`,
-# which performs a network request to the robot simulator.
-#
-# Why async matters for network I/O
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# FastAPI uses an async event loop (from the `asyncio` standard library).
-# When an async handler reaches an `await`, it *suspends itself* and lets the
-# event loop handle other incoming requests, rather than blocking the whole
-# process.  This means one Python process can serve many concurrent requests
-# without needing a thread per request — crucial for a real-time robotics
-# dashboard where many clients may be connected simultaneously.
-#
-# Error handling pattern
-# ~~~~~~~~~~~~~~~~~~~~~~
-# We catch `RobotConnectionError` specifically — not bare `Exception`.
-# Catching only the errors we expect means unexpected bugs (e.g. a TypeError
-# from bad data) still propagate and cause a proper 500 response, rather than
-# being silently swallowed by an overly broad except clause.
-#
-# Returning {"error": str(exc)} gives the frontend a machine-readable message
-# instead of letting FastAPI produce an unhelpful 500 HTML page.
+# ── Math Safety Checks ─────────────────────────────────────────────────────
+def is_safe_move(x: int, y: int, grid: list) -> bool:
+    """Returns True if the coordinates are inside the grid and not an obstacle."""
+    if not (0 <= x <= 20 and 0 <= y <= 20):
+        return False
+    top_row_index = len(grid) - 1
+    return grid[top_row_index - y][x] == 0
+
+
+# ── Robot Control Endpoints with Integrated Automated Auditing (c) ──────────
+
 @app.get("/api/status")
 async def get_status():
-    """Return the current robot status (position, battery level, state).
-
-    Proxies the request to the Virtual Robot API via
-    ``robot_client.RobotClient``.
-    Returns the robot's JSON payload directly, or an error dict if the robot
-    simulator is unreachable.
-    """
+    """Return the current robot status (position, battery level, state)."""
     try:
         return await robot.get_status()
     except RobotConnectionError as exc:
-        # Log the error server-side at WARNING level so it appears in the
-        # server logs without spamming at ERROR level for expected downtime.
         logger.warning("Could not reach robot API: %s", exc)
         return {"error": str(exc)}
 
@@ -189,27 +250,21 @@ def get_experimental_stats():
     return {"status": "success", "data": "Top secret advanced stats!"}
 
 
-def is_safe_move(x: int, y: int, grid: list) -> bool:
-    """Returns True if the coordinates are inside the 21x21 grid
-    and not an obstacle."""
-    if not (0 <= x <= 20 and 0 <= y <= 20):
-        return False
-    top_row_index = len(grid) - 1
-    return grid[top_row_index - y][x] == 0
-
-
-# ── TODO: add your routes below ────────────────────────────────────────────
-# Use the skeletons below as starting points.  Each route should:
-#   1. Validate inputs — FastAPI does this automatically when you add type
-#      hints to the function parameters (e.g. `x: int`).
-#   2. Call the appropriate RobotClient method from robot_client.py.
-#   3. Handle RobotConnectionError (and any other expected errors) gracefully.
-#   4. Return a meaningful JSON response.
 @app.post("/api/move")
-async def move(x: int, y: int):
-    """Send the robot to position (x, y)."""
+async def move(x: int, y: int, username: str = "anonymous"):
+    """Send the robot to position (x, y) and log the action automatically."""
     try:
-        return await robot.move(x, y)
+        # Fetch map to validate move safety locally before dispatching to client
+        grid_data = await robot.get_map()
+        if "grid" in grid_data and not is_safe_move(x, y, grid_data["grid"]):
+            emit_audit_log(username, "MOVE_REJECTED", f"Blocked unsafe coordinates request: ({x}, {y})")
+            return {"error": f"Target position ({x}, {y}) contains an obstacle or is invalid."}
+
+        response = await robot.move(x, y)
+        
+        # Log successful movement tracking entry dynamically (c)
+        emit_audit_log(username, "MOVE_COMMAND", f"Dispatched robot to coordinates: ({x}, {y})")
+        return response
     except RobotConnectionError as exc:
         logger.warning("Move command failed: %s", exc)
         return {"error": str(exc)}
@@ -217,27 +272,20 @@ async def move(x: int, y: int):
 
 @app.websocket("/ws/telemetry")
 async def ws_telemetry(websocket: WebSocket):
-    """Stream live sensor data to a connected browser client.
-
-    WebSockets maintain a persistent two-way connection, making them ideal
-    for low-latency telemetry feeds (position, battery, sensor readings).
-    Unlike HTTP, you don't need to poll — the server pushes updates.
-    """
+    """Stream live sensor data to a connected browser client."""
     await websocket.accept()
     try:
         while True:
             data = await robot.get_status()
             await websocket.send_json(data)
-            await asyncio.sleep(0.5)   # push an update every 500 ms
+            await asyncio.sleep(0.5)
     except WebSocketDisconnect:
         logger.info("Telemetry client disconnected")
-# Read the feature flag, defaulting to "false" if not set
 
 
 @app.get("/api/map")
 async def get_map():
-    """Return the map.
-    """
+    """Return the map grid layout."""
     try:
         return await robot.get_map()
     except RobotConnectionError as exc:
@@ -246,9 +294,14 @@ async def get_map():
 
 
 @app.post("/api/reset")
-async def reset_simulation():
+async def reset_simulation(username: str = "anonymous"):
+    """Reset the world state environment and track the initialization event."""
     try:
-        return await robot.reset()
+        response = await robot.reset()
+        
+        # Log reset invocation event tracking logs (c)
+        emit_audit_log(username, "ENVIRONMENT_RESET", "Simulation environment state was forced back to defaults.")
+        return response
     except RobotConnectionError as exc:
         return {"error": str(exc)}
 
