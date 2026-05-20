@@ -1,3 +1,4 @@
+flowchart TD
 %% Define Actors
 C[Commander]
 V[Viewer]

@@ -142,8 +142,10 @@ def register_user(user: UserAccount):
                     f"already exists."),
         )
 
-    query = "INSERT INTO users (username, password_hash, role) "
-    "VALUES (%s, %s, %s)"
+    query = (
+        "INSERT INTO users (username, password_hash, role) "
+        "VALUES (%s, %s, %s)"
+    )
     hashed_password = secure_hash(user.password)
 
     try:
